@@ -43,7 +43,7 @@ def simulation_frame(cells, frame_time):
 
                 for firing_cell in firing_queue:
 
-                    radius = calculate_radius(current_cell.x, current_cell.y, firing_cell.x, firing_cell.y) / \
+                    radius = calculate_radius((current_cell.x, current_cell.y), (firing_cell.x, firing_cell.y)) / \
                         RADIUS_SCALE
 
                     if fired_recently(firing_cell) and radius < INFLUENCE_RADIUS:
@@ -101,9 +101,9 @@ def calculate_gradient(r, t):
     return (2 * concentration * r) / (4 * Constants.DIFFUSION_CONSTANT * t)
 
 
-def calculate_radius(x0, y0, x1, y1):
+def calculate_radius(start, end):
 
-    return math.sqrt((x1 - x0) ** 2 + (y0 - y1) ** 2)
+    return math.sqrt((start[0] - end[0]) ** 2 + (start[1] - end[1]) ** 2)
 
 
 def create_random_cells(length, height, n_of_cells):

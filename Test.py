@@ -21,5 +21,5 @@ from PIL import Image
 #
 # plt.show()
 
-i = Image.new("RGB", (100, 100)).show()
+# i = Image.new("RGB", (100, 100)).show()
 
