@@ -1,9 +1,9 @@
 class Cell(object):
 
-    def __init__(self, x, y, timer, radius, cAMP):
+    def __init__(self, x, y, timer, radius, camp):
         self.x = x
         self.y = y
         self.timer = timer
         self.radius = radius
-        self.cAMP = cAMP
-        self.fired_recently = False
+        self.camp = camp
+        self.move_vector = (0, 0)

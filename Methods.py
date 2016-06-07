@@ -3,61 +3,69 @@ import math
 from decimal import Decimal
 from random import randint
 from Cell import Cell
-from Queue import Queue
 from matplotlib import pyplot as plt
 import numpy as np
 
 
 def simulation(size, cells):
-
     environment = np.zeros(size, size)
 
     for cell in cells:
         environment[cell.x, cell.y] += 1
 
 
-def create_random_cells(length, height, n_of_cells):
-    result = [0] * n_of_cells
-
-    for i in range(n_of_cells):
-        x = randint(0, length - 1)
-        y = randint(0, height - 1)
-
-        result[i] = Cell(x, y, 0, 0, 0)
-
-    return result
-
-
 def algorithm_for_single_cell(cells):
 
-    is_autonomous = True
     is_ready_to_fire = True
     is_sensitive = True
-    firing_queue = Queue
+    fired_recently = False
+    firing_queue = []
+    environment = np.zeros(1000, 1000)
+
+    for cell in cells:
+        environment[cell.x, cell.y] += 1
 
     for i in range(len(cells)):
 
         current_cell = cells[i]
 
-        for cell in cells:
-            if current_cell is not cell and current_cell.x == cell.x and current_cell.y == cell.y:
-                is_autonomous = False
-                break
+        if is_autonomous(current_cell, environment):
 
-        if is_autonomous:
             if is_ready_to_fire:
-                firing_queue.put(current_cell)
-                # set clock
-            else:
-                break
-        else:
-            if is_sensitive:
-                cell = firing_queue
+                firing_queue.append(current_cell)
+                current_cell.timer = Constants.relaying_refractory_period
 
-            else:
-                break
+        else:
+
+            if is_sensitive:
+
+                for firing_cell in firing_queue:
+                    if fired_recently:
+
+                        radius = calculate_radius(current_cell.x, current_cell.y,
+                                                  firing_cell.x, firing_cell.y)
+
+                        current_cell.camp += calculate_camp_concentration()
+
+
 
     return 0
+
+
+# TODO not sure if that's correct way of checking autonomy
+def is_autonomous(cell, environment):
+
+    return environment[cell.x, cell.y] == 1
+
+
+def move_cell(cell, environment, destination=(0, 0)):
+
+    environment[cell.x, cell.y] -= 1
+
+    cell.x = destination[0]
+    cell.y = destination[1]
+
+    environment[cell.x, cell.y] += 1
 
 
 def calculate_camp_concentration(r, t):
@@ -73,12 +81,6 @@ def calculate_camp_concentration(r, t):
     return (n * a * b) / c
 
 
-# TODO not sure if that's correct way of checking autonomy
-def check_if_autonomous(cell, environment):
-
-    return environment[cell.x, cell.y] == 1
-
-
 def calculate_gradient(r, t):
 
     t = Decimal(str(t))
@@ -87,6 +89,23 @@ def calculate_gradient(r, t):
     concentration = calculate_camp_concentration(r, t)
 
     return (2 * concentration * r) / (4 * Constants.diffusion_constant * t)
+
+
+def calculate_radius(x0, y0, x1, y1):
+
+    return math.sqrt((x1 - x0) ** 2 + (y0 - y1) ** 2) / 10e3
+
+
+def create_random_cells(length, height, n_of_cells):
+    result = [0] * n_of_cells
+
+    for i in range(n_of_cells):
+        x = randint(0, length - 1)
+        y = randint(0, height - 1)
+
+        result[i] = Cell(x, y, 0, 0, 0)
+
+    return result
 
 
 # m = np.zeros((1000, 1000))
@@ -116,3 +135,5 @@ def calculate_gradient(r, t):
 # plt.plot(xaxis, yaxis2)
 # plt.plot(xaxis, yaxis3)
 # plt.show()
+
+print calculate_radius(0,0,200,200)
