@@ -6,6 +6,9 @@ from Cell import Cell
 from matplotlib import pyplot as plt
 import numpy as np
 
+RADIUS_SCALE = 1e3
+INFLUENCE_RADIUS = 0.300
+
 
 def simulation(size, cells):
     environment = np.zeros(size, size)
@@ -14,11 +17,10 @@ def simulation(size, cells):
         environment[cell.x, cell.y] += 1
 
 
-def algorithm_for_single_cell(cells):
+def simulation_frame(cells, frame_time):
 
     is_ready_to_fire = True
     is_sensitive = True
-    fired_recently = False
     firing_queue = []
     environment = np.zeros(1000, 1000)
 
@@ -33,21 +35,24 @@ def algorithm_for_single_cell(cells):
 
             if is_ready_to_fire:
                 firing_queue.append(current_cell)
-                current_cell.timer = Constants.relaying_refractory_period
+                current_cell.timer = Constants.RELAYING_REFRACTORY_PERIOD
 
         else:
 
             if is_sensitive:
 
                 for firing_cell in firing_queue:
-                    if fired_recently:
 
-                        radius = calculate_radius(current_cell.x, current_cell.y,
-                                                  firing_cell.x, firing_cell.y)
+                    radius = calculate_radius(current_cell.x, current_cell.y, firing_cell.x, firing_cell.y) / \
+                        RADIUS_SCALE
 
-                        current_cell.camp += calculate_camp_concentration()
+                    if fired_recently(firing_cell) and radius < INFLUENCE_RADIUS:
 
+                        current_cell.camp += calculate_camp_concentration(radius, firing_cell.firing_timer)
 
+                # TODO calculate gradient, chose destination with highest, move cell one step at a time
+                if current_cell.camp > Constants.CHEMOTAXIS_THRESHOLD:
+                    move_cell(current_cell, environment)
 
     return 0
 
@@ -56,6 +61,11 @@ def algorithm_for_single_cell(cells):
 def is_autonomous(cell, environment):
 
     return environment[cell.x, cell.y] == 1
+
+
+def fired_recently(cell):
+
+    return cell.firing_timer
 
 
 def move_cell(cell, environment, destination=(0, 0)):
@@ -73,10 +83,10 @@ def calculate_camp_concentration(r, t):
     t = Decimal(str(t))
     r = Decimal(str(r))
 
-    n = Constants.n_of_molecules_released
-    a = Decimal.exp(-((r ** 2) / (4 * Constants.diffusion_constant * t)))
-    b = Decimal.exp(-(t / Constants.tau))
-    c = Decimal(4 * Decimal(math.pi) * t * Constants.diffusion_constant) ** (Decimal(2) / Decimal(3))
+    n = Constants.N_OF_RELEASED_MOLECULES
+    a = Decimal.exp(-((r ** 2) / (4 * Constants.DIFFUSION_CONSTANT * t)))
+    b = Decimal.exp(-(t / Constants.TAU))
+    c = Decimal(4 * Decimal(math.pi) * t * Constants.DIFFUSION_CONSTANT) ** (Decimal(2) / Decimal(3))
 
     return (n * a * b) / c
 
@@ -88,12 +98,12 @@ def calculate_gradient(r, t):
 
     concentration = calculate_camp_concentration(r, t)
 
-    return (2 * concentration * r) / (4 * Constants.diffusion_constant * t)
+    return (2 * concentration * r) / (4 * Constants.DIFFUSION_CONSTANT * t)
 
 
 def calculate_radius(x0, y0, x1, y1):
 
-    return math.sqrt((x1 - x0) ** 2 + (y0 - y1) ** 2) / 10e3
+    return math.sqrt((x1 - x0) ** 2 + (y0 - y1) ** 2)
 
 
 def create_random_cells(length, height, n_of_cells):
@@ -103,7 +113,7 @@ def create_random_cells(length, height, n_of_cells):
         x = randint(0, length - 1)
         y = randint(0, height - 1)
 
-        result[i] = Cell(x, y, 0, 0, 0)
+        result[i] = Cell(x, y, 0, 0)
 
     return result
 
@@ -125,15 +135,13 @@ def create_random_cells(length, height, n_of_cells):
 #
 #
 # for i in range(1, 1000):
-#     yaxis[i] = calculate_camp_concentration(0.250, i)
+#     yaxis[i] = calculate_camp_concentration(0.280, i)
 #
 # for i in range(1, 1000):
-#     yaxis3[i] = calculate_camp_concentration(0.240, i)
+#     yaxis3[i] = calculate_camp_concentration(0.250, i)
 #
 # plt.figure(1)
 # plt.plot(xaxis, yaxis)
 # plt.plot(xaxis, yaxis2)
 # plt.plot(xaxis, yaxis3)
 # plt.show()
-
-print calculate_radius(0,0,200,200)
