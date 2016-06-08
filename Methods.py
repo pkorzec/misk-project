@@ -6,11 +6,9 @@ from Cell import Cell
 from matplotlib import pyplot as plt
 import numpy as np
 
-RADIUS_SCALE = 1e3
-INFLUENCE_RADIUS = 0.300
 
+def simulation(size, cells, centers):
 
-def simulation(size, cells):
     environment = np.zeros(size, size)
 
     for cell in cells:
@@ -19,8 +17,6 @@ def simulation(size, cells):
 
 def simulation_frame(cells, frame_time):
 
-    is_ready_to_fire = True
-    is_sensitive = True
     firing_queue = []
     environment = np.zeros(1000, 1000)
 
@@ -31,41 +27,55 @@ def simulation_frame(cells, frame_time):
 
         current_cell = cells[i]
 
-        if is_autonomous(current_cell, environment):
+        current_cell.update(frame_time)
+
+        is_ready_to_fire = current_cell.relaying_refractory_timer <= 0
+        is_sensitive = current_cell.chemotaxis_refractory_timer <= 0
+
+        if current_cell.is_autonomous:
 
             if is_ready_to_fire:
                 firing_queue.append(current_cell)
-                current_cell.timer = Constants.RELAYING_REFRACTORY_PERIOD
+                current_cell.relaying_refractory_timer = Constants.RELAYING_REFRACTORY_PERIOD
+                current_cell.firing_timer = 1
 
         else:
 
             if is_sensitive:
 
+                max_gradient = 0
+                coordinates = ()
+
                 for firing_cell in firing_queue:
 
                     radius = calculate_radius((current_cell.x, current_cell.y), (firing_cell.x, firing_cell.y)) / \
-                        RADIUS_SCALE
+                        Constants.RADIUS_SCALE
 
-                    if fired_recently(firing_cell) and radius < INFLUENCE_RADIUS:
+                    firing_influence = current_cell.firing_timer
 
-                        current_cell.camp += calculate_camp_concentration(radius, firing_cell.firing_timer)
+                    if firing_influence < Constants.INFLUENCE_TIME and radius < Constants.INFLUENCE_RADIUS:
+
+                        camp = calculate_camp_concentration(radius, firing_influence)
+
+                        current_cell.camp += camp
+
+                        gradient = calculate_gradient(radius, firing_influence)
+
+                        if gradient > max_gradient:
+                            max_gradient = gradient
+                            coordinates = (firing_cell.x, firing_cell.y)
 
                 # TODO calculate gradient, chose destination with highest, move cell one step at a time
                 if current_cell.camp > Constants.CHEMOTAXIS_THRESHOLD:
-                    move_cell(current_cell, environment)
+                    move_cell(current_cell, environment, coordinates)
+
+                if current_cell.camp > Constants.RELAYING_THRESHOLD:
+                    if is_ready_to_fire:
+                        firing_queue.append(current_cell)
+                        current_cell.relaying_refractory_timer = Constants.RELAYING_REFRACTORY_PERIOD
+                        current_cell.firing_timer = 1
 
     return 0
-
-
-# TODO not sure if that's correct way of checking autonomy
-def is_autonomous(cell, environment):
-
-    return environment[cell.x, cell.y] == 1
-
-
-def fired_recently(cell):
-
-    return cell.firing_timer
 
 
 def move_cell(cell, environment, destination=(0, 0)):
