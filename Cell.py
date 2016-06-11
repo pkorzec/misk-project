@@ -26,3 +26,6 @@ class Cell(object):
             self.firing_timer += time_frame
 
         self.camp = 0
+
+    def __str__(self):
+        return '[%d, %d]' % (self.x, self.y)

@@ -3,29 +3,48 @@ import math
 from decimal import Decimal
 from random import randint
 from Cell import Cell
+from Bresenham import get_line
 from matplotlib import pyplot as plt
 import numpy as np
 
 
-def simulation(size, cells, centers):
+def simulation(size, cells, iterations, frame_time, centers=((500, 500),)):
 
-    environment = np.zeros(size, size)
-
-    for cell in cells:
-        environment[cell.x, cell.y] += 1
-
-
-def simulation_frame(cells, frame_time):
-
+    environment = np.zeros((size, size))
     firing_queue = []
-    environment = np.zeros(1000, 1000)
+    frames = []
+
+    for coordinates in centers:
+        cell = Cell(coordinates[0], coordinates[1])
+        cells.append(cell)
+        cell.is_autonomous = True
 
     for cell in cells:
         environment[cell.x, cell.y] += 1
 
-    for i in range(len(cells)):
+    for iteration in range(iterations):
+        print 'iteration %d' % iteration
+        simulation_frame(cells, frame_time, environment, firing_queue)
 
-        current_cell = cells[i]
+        if iteration % 4 == 0:
+            frames.append(environment)
+
+        tmp = []
+
+        for cell in firing_queue:
+            if cell.firing_timer < Constants.INFLUENCE_TIME:
+                tmp.append(cell)
+
+        firing_queue = tmp
+
+    return frames
+
+
+def simulation_frame(cells, frame_time, environment, firing_queue):
+
+    for z in range(len(cells)):
+
+        current_cell = cells[z]
 
         current_cell.update(frame_time)
 
@@ -35,6 +54,7 @@ def simulation_frame(cells, frame_time):
         if current_cell.is_autonomous:
 
             if is_ready_to_fire:
+
                 firing_queue.append(current_cell)
                 current_cell.relaying_refractory_timer = Constants.RELAYING_REFRACTORY_PERIOD
                 current_cell.firing_timer = 1
@@ -51,23 +71,29 @@ def simulation_frame(cells, frame_time):
                     radius = calculate_radius((current_cell.x, current_cell.y), (firing_cell.x, firing_cell.y)) / \
                         Constants.RADIUS_SCALE
 
-                    firing_influence = current_cell.firing_timer
+                    firing_influence = firing_cell.firing_timer
 
                     if firing_influence < Constants.INFLUENCE_TIME and radius < Constants.INFLUENCE_RADIUS:
 
-                        camp = calculate_camp_concentration(radius, firing_influence)
+                        result = calculate_gradient(radius, firing_influence)
 
-                        current_cell.camp += camp
+                        gradient = result['gradient']
+                        camp = result['camp']
 
-                        gradient = calculate_gradient(radius, firing_influence)
+                        if current_cell.camp < Constants.RELAYING_THRESHOLD:
+                            current_cell.camp += camp
 
                         if gradient > max_gradient:
                             max_gradient = gradient
                             coordinates = (firing_cell.x, firing_cell.y)
 
-                # TODO calculate gradient, chose destination with highest, move cell one step at a time
                 if current_cell.camp > Constants.CHEMOTAXIS_THRESHOLD:
-                    move_cell(current_cell, environment, coordinates)
+
+                    current_cell.chemotaxis_refractory_timer = Constants.CHEMOTAXIS_REFRACTORY_PERIOD
+                    movement_vector = get_line((current_cell.x, current_cell.y), (coordinates[0], coordinates[1]), 20)
+                    current_cell.coordinates = movement_vector
+                    move_cell(current_cell, environment, current_cell.coordinates[0])
+                    current_cell.coordinates.pop(0)
 
                 if current_cell.camp > Constants.RELAYING_THRESHOLD:
                     if is_ready_to_fire:
@@ -107,8 +133,9 @@ def calculate_gradient(r, t):
     r = Decimal(str(r))
 
     concentration = calculate_camp_concentration(r, t)
+    gradient = (2 * concentration * r) / (4 * Constants.DIFFUSION_CONSTANT * t)
 
-    return (2 * concentration * r) / (4 * Constants.DIFFUSION_CONSTANT * t)
+    return {'gradient': gradient, 'camp': concentration}
 
 
 def calculate_radius(start, end):
@@ -123,7 +150,7 @@ def create_random_cells(length, height, n_of_cells):
         x = randint(0, length - 1)
         y = randint(0, height - 1)
 
-        result[i] = Cell(x, y, 0, 0)
+        result[i] = Cell(x, y)
 
     return result
 
@@ -135,7 +162,7 @@ def create_random_cells(length, height, n_of_cells):
 # for c in cells:
 #     m[c.x, c.y] += 1
 #
-# plt.matshow(m, cmap=plt.cm.gray)
+# plt.matshow(m, fignum=100, cmap=plt.cm.gray)
 # plt.show()
 #
 # yaxis = [Decimal(0)] * 1000
@@ -145,7 +172,7 @@ def create_random_cells(length, height, n_of_cells):
 #
 #
 # for i in range(1, 1000):
-#     yaxis[i] = calculate_camp_concentration(0.280, i)
+#     yaxis[i] = calculate_camp_concentration(0.010, i)
 #
 # for i in range(1, 1000):
 #     yaxis3[i] = calculate_camp_concentration(0.250, i)
