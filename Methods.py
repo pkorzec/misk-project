@@ -21,9 +21,6 @@ def simulation(size, cells, iterations, frame_time, centers=((500, 500),)):
     for cell in cells:
         environment[cell.x, cell.y] += 1
 
-    # plt.matshow(environment, fignum=(1), cmap=plt.cm.gray)
-    # plt.show()
-
     for iteration in range(iterations):
         print 'iteration %d' % iteration
         simulation_frame(cells, frame_time, environment, firing_queue)
@@ -34,16 +31,13 @@ def simulation(size, cells, iterations, frame_time, centers=((500, 500),)):
 
         tmp = []
 
-        print len(firing_queue)
+        # print len(firing_queue)
 
         for cell in firing_queue:
             if cell.firing_timer < Constants.INFLUENCE_TIME:
                 tmp.append(cell)
 
         firing_queue = tmp
-
-    # plt.matshow(environment, fignum=(120), cmap=plt.cm.gray)
-    # plt.show()
 
     return 0
 
@@ -100,12 +94,7 @@ def simulation_frame(cells, frame_time, environment, firing_queue):
 
                     current_cell.chemotaxis_refractory_timer = Constants.CHEMOTAXIS_REFRACTORY_PERIOD
                     movement_vector = get_line((current_cell.x, current_cell.y), (coordinates[0], coordinates[1]), 20)
-                    # print 'Cell: ', current_cell, 'source:', coordinates , 'movement: ', movement_vector
                     current_cell.coordinates = movement_vector
-                    # move_cell(current_cell, environment, current_cell.coordinates[0])
-
-                    # print 'Moving cell', current_cell, 'to ', coordinates
-                    # print 'Popping coordinte:',
                     current_cell.coordinates.pop(0)
 
                 if current_cell.camp > Constants.RELAYING_THRESHOLD:
@@ -117,6 +106,7 @@ def simulation_frame(cells, frame_time, environment, firing_queue):
         cell_coord = current_cell.coordinates
         if len(cell_coord) > 0:
             if environment[cell_coord[0][0], cell_coord[0][1]] == 0:
+                # print 'Current cell: ', current_cell, 'dest: ', current_cell.coordinates[0]
                 move_cell(current_cell, environment, current_cell.coordinates[0])
 
             current_cell.coordinates.pop(0)
@@ -163,12 +153,12 @@ def calculate_radius(start, end):
     return math.sqrt((start[0] - end[0]) ** 2 + (start[1] - end[1]) ** 2)
 
 
-def create_random_cells(length, height, n_of_cells):
+def create_random_cells(size, n_of_cells):
     result = [0] * n_of_cells
 
     for i in range(n_of_cells):
-        x = randint(0, length - 1)
-        y = randint(0, height - 1)
+        x = randint(0, size - 1)
+        y = randint(0, size - 1)
 
         result[i] = Cell(x, y)
 
