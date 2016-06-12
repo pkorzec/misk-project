@@ -1,8 +1,8 @@
-from decimal import Decimal
+from cdecimal import Decimal
 
 N_OF_RELEASED_MOLECULES       = Decimal('10000000')
 DIFFUSION_CONSTANT            = Decimal('0.0000097')
-TAU                           = Decimal('5')            # typically 1 - 10s
+TAU                           = Decimal('8')            # typically 1 - 10s
 RELAYING_THRESHOLD            = Decimal('0.000000008')
 CHEMOTAXIS_THRESHOLD          = Decimal('0.000000001')
 RELAYING_DELAY                = 15   # s

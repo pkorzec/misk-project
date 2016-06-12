@@ -1,18 +1,17 @@
 import Constants
 import math
-from decimal import Decimal
 from random import randint
 from Cell import Cell
 from Bresenham import get_line
 from matplotlib import pyplot as plt
 import numpy as np
+from cdecimal import Decimal
 
 
 def simulation(size, cells, iterations, frame_time, centers=((500, 500),)):
 
     environment = np.zeros((size, size))
     firing_queue = []
-    frames = []
 
     for coordinates in centers:
         cell = Cell(coordinates[0], coordinates[1])
@@ -22,14 +21,20 @@ def simulation(size, cells, iterations, frame_time, centers=((500, 500),)):
     for cell in cells:
         environment[cell.x, cell.y] += 1
 
+    # plt.matshow(environment, fignum=(1), cmap=plt.cm.gray)
+    # plt.show()
+
     for iteration in range(iterations):
         print 'iteration %d' % iteration
         simulation_frame(cells, frame_time, environment, firing_queue)
 
-        if iteration % 4 == 0:
-            frames.append(environment)
+        plt.matshow(environment, fignum=(iteration + 1), cmap=plt.cm.gray)
+        plt.savefig('Results/screens%d.png' % iteration)
+        plt.close()
 
         tmp = []
+
+        print len(firing_queue)
 
         for cell in firing_queue:
             if cell.firing_timer < Constants.INFLUENCE_TIME:
@@ -37,7 +42,10 @@ def simulation(size, cells, iterations, frame_time, centers=((500, 500),)):
 
         firing_queue = tmp
 
-    return frames
+    # plt.matshow(environment, fignum=(120), cmap=plt.cm.gray)
+    # plt.show()
+
+    return 0
 
 
 def simulation_frame(cells, frame_time, environment, firing_queue):
@@ -64,7 +72,7 @@ def simulation_frame(cells, frame_time, environment, firing_queue):
             if is_sensitive:
 
                 max_gradient = 0
-                coordinates = ()
+                coordinates = (50, 50)
 
                 for firing_cell in firing_queue:
 
@@ -87,12 +95,17 @@ def simulation_frame(cells, frame_time, environment, firing_queue):
                             max_gradient = gradient
                             coordinates = (firing_cell.x, firing_cell.y)
 
-                if current_cell.camp > Constants.CHEMOTAXIS_THRESHOLD:
+                if current_cell.camp > Constants.CHEMOTAXIS_THRESHOLD and \
+                        current_cell.chemotaxis_refractory_timer < 0:
 
                     current_cell.chemotaxis_refractory_timer = Constants.CHEMOTAXIS_REFRACTORY_PERIOD
                     movement_vector = get_line((current_cell.x, current_cell.y), (coordinates[0], coordinates[1]), 20)
+                    # print 'Cell: ', current_cell, 'source:', coordinates , 'movement: ', movement_vector
                     current_cell.coordinates = movement_vector
-                    move_cell(current_cell, environment, current_cell.coordinates[0])
+                    # move_cell(current_cell, environment, current_cell.coordinates[0])
+
+                    # print 'Moving cell', current_cell, 'to ', coordinates
+                    # print 'Popping coordinte:',
                     current_cell.coordinates.pop(0)
 
                 if current_cell.camp > Constants.RELAYING_THRESHOLD:
@@ -100,6 +113,13 @@ def simulation_frame(cells, frame_time, environment, firing_queue):
                         firing_queue.append(current_cell)
                         current_cell.relaying_refractory_timer = Constants.RELAYING_REFRACTORY_PERIOD
                         current_cell.firing_timer = 1
+
+        cell_coord = current_cell.coordinates
+        if len(cell_coord) > 0:
+            if environment[cell_coord[0][0], cell_coord[0][1]] == 0:
+                move_cell(current_cell, environment, current_cell.coordinates[0])
+
+            current_cell.coordinates.pop(0)
 
     return 0
 
@@ -120,7 +140,7 @@ def calculate_camp_concentration(r, t):
     r = Decimal(str(r))
 
     n = Constants.N_OF_RELEASED_MOLECULES
-    a = Decimal.exp(-((r ** 2) / (4 * Constants.DIFFUSION_CONSTANT * t)))
+    a = Decimal.exp(-((r ** Decimal(2)) / (Decimal(4) * Constants.DIFFUSION_CONSTANT * t)))
     b = Decimal.exp(-(t / Constants.TAU))
     c = Decimal(4 * Decimal(math.pi) * t * Constants.DIFFUSION_CONSTANT) ** (Decimal(2) / Decimal(3))
 
@@ -172,7 +192,7 @@ def create_random_cells(length, height, n_of_cells):
 #
 #
 # for i in range(1, 1000):
-#     yaxis[i] = calculate_camp_concentration(0.010, i)
+#     yaxis[i] = calculate_camp_concentration(0.100, i)
 #
 # for i in range(1, 1000):
 #     yaxis3[i] = calculate_camp_concentration(0.250, i)

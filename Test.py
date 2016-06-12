@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
+from Bresenham import get_line
 
 
 # def samplemat(dims):
@@ -22,4 +23,7 @@ from PIL import Image
 # plt.show()
 
 # i = Image.new("RGB", (100, 100)).show()
+
+print get_line((0,0), (70, 90), 20)
+
 
