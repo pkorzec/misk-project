@@ -6,6 +6,6 @@ n_of_cells = 500
 iterations = 120
 size = 200
 cells = create_random_cells(size, n_of_cells)
-centers = ((30, 30), (70, 70))
+centers = ((100, 100),)
 
 simulation(size, cells, iterations, frame_time, centers)

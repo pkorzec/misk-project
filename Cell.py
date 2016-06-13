@@ -16,15 +16,9 @@ class Cell(object):
 
     def update(self, time_frame):
 
-        if self.chemotaxis_refractory_timer >= 0:
-            self.chemotaxis_refractory_timer -= time_frame
-
-        if self.relaying_refractory_timer >= 0:
-            self.relaying_refractory_timer -= time_frame
-
-        if self.firing_timer <= Constants.INFLUENCE_TIME:
-            self.firing_timer += time_frame
-
+        self.chemotaxis_refractory_timer -= time_frame
+        self.relaying_refractory_timer -= time_frame
+        self.firing_timer += time_frame
         self.camp = 0
 
     def __str__(self):

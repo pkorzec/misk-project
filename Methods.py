@@ -23,15 +23,14 @@ def simulation(size, cells, iterations, frame_time, centers=((500, 500),)):
 
     for iteration in range(iterations):
         print 'iteration %d' % iteration
+
         simulation_frame(cells, frame_time, environment, firing_queue)
 
         plt.matshow(environment, fignum=(iteration + 1), cmap=plt.cm.gray)
-        plt.savefig('Results/screens%d.png' % iteration)
+        plt.savefig('Results/%d-seconds.png' % ((iteration + 1) * 5))
         plt.close()
 
         tmp = []
-
-        # print len(firing_queue)
 
         for cell in firing_queue:
             if cell.firing_timer < Constants.INFLUENCE_TIME:
@@ -65,8 +64,8 @@ def simulation_frame(cells, frame_time, environment, firing_queue):
 
             if is_sensitive:
 
-                max_gradient = 0
-                coordinates = (50, 50)
+                max_gradient = -1
+                coordinates = ()
 
                 for firing_cell in firing_queue:
 
@@ -89,8 +88,7 @@ def simulation_frame(cells, frame_time, environment, firing_queue):
                             max_gradient = gradient
                             coordinates = (firing_cell.x, firing_cell.y)
 
-                if current_cell.camp > Constants.CHEMOTAXIS_THRESHOLD and \
-                        current_cell.chemotaxis_refractory_timer < 0:
+                if current_cell.camp > Constants.CHEMOTAXIS_THRESHOLD and len(current_cell.coordinates) == 0:
 
                     current_cell.chemotaxis_refractory_timer = Constants.CHEMOTAXIS_REFRACTORY_PERIOD
                     movement_vector = get_line((current_cell.x, current_cell.y), (coordinates[0], coordinates[1]), 20)
@@ -174,7 +172,7 @@ def create_random_cells(size, n_of_cells):
 #
 # plt.matshow(m, fignum=100, cmap=plt.cm.gray)
 # plt.show()
-#
+
 # yaxis = [Decimal(0)] * 1000
 # xaxis = [i for i in range(1000)]
 # yaxis2 = [Decimal(8e-9)] * 1000
@@ -182,10 +180,10 @@ def create_random_cells(size, n_of_cells):
 #
 #
 # for i in range(1, 1000):
-#     yaxis[i] = calculate_camp_concentration(0.100, i)
+#     yaxis[i] = calculate_gradient(0.240, i)['gradient']
 #
 # for i in range(1, 1000):
-#     yaxis3[i] = calculate_camp_concentration(0.250, i)
+#     yaxis3[i] = calculate_camp_concentration(0.240, i)
 #
 # plt.figure(1)
 # plt.plot(xaxis, yaxis)

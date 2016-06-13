@@ -43,4 +43,3 @@ def get_line(start, end, limit):
         points.reverse()
 
     return points
-
